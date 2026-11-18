@@ -1,0 +1,34 @@
+========================================================================================================
+BMU PHASE 1: SANITY / SMOKE TEST SEQUENCE & EXPECTED OUTPUTS
+========================================================================================================
+
+You can use this fixed 10-transaction sanity sequence to verify that your UVM driver, 
+virtual interface, clocking blocks, and monitor are connected and sampling correctly.
+
+Clock Frequency: 100 MHz (10 ns period)
+Reset: Asserted active-low for first 20 ns, then deasserted at t=25 ns.
+Latency: 1 clock cycle (Output valid and data observed at Cycle T+1 after valid_i at Cycle T).
+
+--------------------------------------------------------------------------------------------------------
+Cycle | Input Stimulus (Cycle T)                                    | Expected Output at Cycle T+1
+      | valid_i | op_i       | rs1_i        | rs2_i        | Note   | valid_o | rd_o (Hex)  | rd_o (Dec)
+--------------------------------------------------------------------------------------------------------
+  1   |    1    | BMU_SH1ADD | 0x0000_0005  | 0x0000_0003  | (5<<1)+3  |    1    | 0x0000000D  | 13
+  2   |    1    | BMU_SH2ADD | 0x0000_0005  | 0x0000_0003  | (5<<2)+3  |    1    | 0x00000017  | 23
+  3   |    1    | BMU_ANDN   | 0xFFFF_0000  | 0xFF00_FF00  | a & ~b    |    1    | 0x00FF0000  | 16711680
+  4   |    1    | BMU_ORN    | 0x0000_00FF  | 0x0000_FF00  | a | ~b    |    1    | 0xFFFF00FF  | 4294902015
+  5   |    1    | BMU_XNOR   | 0xAA55_AA55  | 0xAA55_AA55  | ~(a ^ b)  |    1    | 0xFFFFFFFF  | 4294967295
+  6   |    1    | BMU_CLZ    | 0x0008_0000  | 0x0000_0000  | bit 19    |    1    | 0x0000000C  | 12
+  7   |    1    | BMU_CPOP   | 0x0F0F_0F0F  | 0x0000_0000  | 16 ones   |    1    | 0x00000010  | 16
+  8   |    1    | BMU_BSET   | 0x0000_0000  | 0x0000_0005  | set bit 5 |    1    | 0x00000020  | 32
+  9   |    1    | BMU_BINV   | 0x0000_0020  | 0x0000_0005  | inv bit 5 |    1    | 0x00000000  | 0
+ 10   |    1    | BMU_REV8   | 0x1234_5678  | 0x0000_0000  | byte swap |    1    | 0x78563412  | 2018915346
+ 11   |    0    | BMU_NOP    | 0x0000_0000  | 0x0000_0000  | idle      |    0    | (holds last result: 0x78563412)
+--------------------------------------------------------------------------------------------------------
+
+Notes:
+1. If your testbench matches the outputs above for this sequence, your physical interface and basic 
+   clock-synchronization logic are operational.
+2. Note that this sanity sequence only exercises basic happy-path cases. It does NOT exercise the full 
+   range of corner cases, boundary conditions, or pipeline transitions. You must write comprehensive, 
+   constrained-random UVM sequences to uncover hidden functional defects!
